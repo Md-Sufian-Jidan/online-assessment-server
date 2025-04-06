@@ -35,11 +35,14 @@ async function run() {
         // 
         app.post('/create-assignment', async (req, res) => {
             const assignment = req.body;
-            console.log(assignment);
             const result = await assignmentCollection.insertOne(assignment);
             res.send(result);
         });
 
+        app.get('/assignments', async (req, res) => {
+            const result = await assignmentCollection.find().toArray();
+            res.send(result);
+        });
 
         app.get('/features', async (req, res) => {
             const result = await featureCollection.find().toArray();
