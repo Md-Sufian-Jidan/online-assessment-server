@@ -30,6 +30,7 @@ async function run() {
         await client.connect();
 
         const assignmentCollection = client.db("study-sync").collection("assignments");
+        const submittedAssignmentCollection = client.db("study-sync").collection("submitted-assignments");
         const featureCollection = client.db("study-sync").collection("features");
 
         // 
@@ -61,20 +62,25 @@ async function run() {
         app.patch('/update-assignment/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
-            const assignment = req.body;
-            const { title, description, difficulty, marks, image, dueDate } = assignment;
-
+            const { title, description, difficulty, marks, image, dueDate } = req.body;
             const update = {
                 $set: {
-                    title: title,
-                    description: description,
-                    difficulty: difficulty,
-                    marks: marks,
-                    image: image,
-                    dueDate: dueDate
-                }
+                    title,
+                    description,
+                    difficulty,
+                    marks,
+                    image,
+                    dueDate,
+                },
             };
             const result = await assignmentCollection.updateOne(filter, update);
+            res.send(result);
+        });
+
+        // submitted assignments apis
+        app.post('/submitted', async(req, res) => {
+            const submit = req.body;
+            const result = await submittedAssignmentCollection.insertOne(submit);
             res.send(result);
         });
 
