@@ -89,6 +89,24 @@ async function run() {
             res.send(result);
         });
 
+        app.patch('/complete-assignment', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const { title, description, difficulty, marks, image, dueDate } = req.body;
+            const update = {
+                $set: {
+                    title,
+                    description,
+                    difficulty,
+                    marks,
+                    image,
+                    dueDate,
+                },
+            };
+            const result = await submittedAssignmentCollection.updateOne(filter, update);
+            res.send(result);
+        });
+
         app.get('/features', async (req, res) => {
             const result = await featureCollection.find().toArray();
             res.send(result);
