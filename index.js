@@ -96,15 +96,22 @@ async function run() {
         });
         // assignments get api
         app.get('/assignments', logger, async (req, res) => {
-            const query = req.query.difficulty;
-            const filter = { difficulty: query };
-            if (query === 'all') {
-                console.log(filter);
-                const result = await assignmentCollection.find().toArray();
-                return res.send(result);
-            }
-            const result = await assignmentCollection.find(filter).toArray();
-            res.send(result);
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 6;
+            const skip = (page - 1) * limit;
+            const difficulty = req.query.difficulty;
+
+            const filter = difficulty && difficulty !== "all" ? { difficulty: difficulty } : {};
+
+            const total = await assignmentCollection.countDocuments(filter);
+            const assignments = await assignmentCollection.find(filter).skip(skip).limit(limit).toArray();
+
+            res.send({
+                data: assignments,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalItems: total,
+            });
         });
 
         app.get('/assignment/:id', logger, async (req, res) => {
@@ -174,9 +181,22 @@ async function run() {
         app.get('/my-submissions/:email', async (req, res) => {
             const email = req.params.email;
             const query = { submittedBy: email };
-            console.log(query);
             const result = await submittedAssignmentCollection.find(query).toArray();
             res.send(result);
+        });
+        // leaderboard
+        app.get('/leaderboard', async (req, res) => {
+            const result = await submittedAssignmentCollection.find().toArray();
+            res.send(result);
+        });
+
+        // app.get('/pagination', async (req, res) => {
+
+        // });
+
+        app.get('/count-assignments', async (req, res) => {
+            const count = await assignmentCollection.estimatedDocumentCount();
+            res.send(count);
         });
 
         app.get('/features', logger, async (req, res) => {
