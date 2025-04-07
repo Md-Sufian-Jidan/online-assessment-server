@@ -46,11 +46,17 @@ const verifyToken = async (req, res, next) => {
             return res.status(401).send({ message: 'unauthorized' });
         }
         // if token is valid then it would be decoded
-        console.log('value in the token', decoded);
+        // console.log('value in the token', decoded);
         req.user = decoded;
         next();
     });
 };
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" ? true : false,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+}
 
 async function run() {
     try {
@@ -64,15 +70,23 @@ async function run() {
         // jwt authentication
         app.post('/jwt', logger, async (req, res) => {
             const user = req.body;
-            // console.log(user);
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
             res
                 .cookie('token', token, {
                     httpOnly: true,
-                    secure: false
+                    secure: false,
+                    sameSite: 'none'
                 })
                 .send({ success: true });
         });
+
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+            console.log('logging user', user);
+            // maxAge = 0 means expire the token
+            res.clearCookie('token', { ...cookieOptions, maxAge: 0 })
+                .send({ success: true })
+        })
         // assignment create api
         app.post('/create-assignment', logger, verifyToken, async (req, res) => {
             const assignment = req.body;
@@ -124,7 +138,7 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/pending', verifyToken, async (req, res) => {
+        app.get('/pending', logger, verifyToken, async (req, res) => {
             const result = await submittedAssignmentCollection.find().toArray();
             res.send(result);
         });
