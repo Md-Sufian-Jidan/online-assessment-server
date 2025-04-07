@@ -78,9 +78,14 @@ async function run() {
         });
 
         // submitted assignments apis
-        app.post('/submitted', async(req, res) => {
+        app.post('/submit-assignment', async (req, res) => {
             const submit = req.body;
             const result = await submittedAssignmentCollection.insertOne(submit);
+            res.send(result);
+        });
+
+        app.get('/pending', async (req, res) => {
+            const result = await submittedAssignmentCollection.find().toArray();
             res.send(result);
         });
 
