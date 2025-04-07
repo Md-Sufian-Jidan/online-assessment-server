@@ -68,52 +68,60 @@ async function run() {
         const featureCollection = client.db("study-sync").collection("features");
 
         // jwt authentication
-        app.post('/jwt', logger, async (req, res) => {
-            const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-            res
-                .cookie('token', token, {
-                    httpOnly: true,
-                    secure: false,
-                    sameSite: 'none'
-                })
-                .send({ success: true });
-        });
+        // app.post('/jwt', logger, async (req, res) => {
+        //     const user = req.body;
+        //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+        //     res
+        //         .cookie('token', token, {
+        //             httpOnly: true,
+        //             secure: false,
+        //             sameSite: 'none'
+        //         })
+        //         .send({ success: true });
+        // });
 
-        app.post('/logout', async (req, res) => {
-            const user = req.body;
-            console.log('logging user', user);
-            // maxAge = 0 means expire the token
-            res.clearCookie('token', { ...cookieOptions, maxAge: 0 })
-                .send({ success: true })
-        })
+        // app.post('/logout', logger, async (req, res) => {
+        //     const user = req.body;
+        //     console.log('logging user', user);
+        //     // maxAge = 0 means expire the token
+        //     res.clearCookie('token', { ...cookieOptions, maxAge: 0 })
+        //         .send({ success: true })
+        // });
+
         // assignment create api
-        app.post('/create-assignment', logger, verifyToken, async (req, res) => {
+        app.post('/create-assignment', logger, async (req, res) => {
             const assignment = req.body;
             const result = await assignmentCollection.insertOne(assignment);
             res.send(result);
         });
         // assignments get api
         app.get('/assignments', logger, async (req, res) => {
-            const result = await assignmentCollection.find().toArray();
+            const query = req.query.difficulty;
+            const filter = { difficulty: query };
+            if (query === 'all') {
+                console.log(filter);
+                const result = await assignmentCollection.find().toArray();
+                return res.send(result);
+            }
+            const result = await assignmentCollection.find(filter).toArray();
             res.send(result);
         });
 
-        app.get('/assignment/:id', logger, verifyToken, async (req, res) => {
+        app.get('/assignment/:id', logger, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const result = await assignmentCollection.findOne(filter);
             res.send(result);
         });
 
-        app.delete('/delete-assignment/:id', logger, verifyToken, async (req, res) => {
+        app.delete('/delete-assignment/:id', logger, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const result = await assignmentCollection.deleteOne(filter);
             res.send(result);
         });
 
-        app.patch('/update-assignment/:id', logger, verifyToken, async (req, res) => {
+        app.patch('/update-assignment/:id', logger, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const { title, description, difficulty, marks, image, dueDate } = req.body;
@@ -132,18 +140,18 @@ async function run() {
         });
 
         // submitted assignments apis
-        app.post('/submit-assignment', logger, verifyToken, async (req, res) => {
+        app.post('/submit-assignment', logger, async (req, res) => {
             const submit = req.body;
             const result = await submittedAssignmentCollection.insertOne(submit);
             res.send(result);
         });
 
-        app.get('/pending', logger, verifyToken, async (req, res) => {
+        app.get('/pending', logger, async (req, res) => {
             const result = await submittedAssignmentCollection.find().toArray();
             res.send(result);
         });
 
-        app.patch('/complete-assignment/:id', verifyToken, async (req, res) => {
+        app.patch('/complete-assignment/:id', logger, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const assignment = req.body;
@@ -162,7 +170,16 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/features', async (req, res) => {
+        // my submissions api
+        app.get('/my-submissions/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { submittedBy: email };
+            console.log(query);
+            const result = await submittedAssignmentCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.get('/features', logger, async (req, res) => {
             const result = await featureCollection.find().toArray();
             res.send(result);
         });
