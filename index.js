@@ -58,8 +58,24 @@ async function run() {
             res.send(result);
         });
 
-        app.update('/update-assignment/:id', async (req, res) => {
+        app.patch('/update-assignment/:id', async (req, res) => {
             const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const assignment = req.body;
+            const { title, description, difficulty, marks, image, dueDate } = assignment;
+
+            const update = {
+                $set: {
+                    title: title,
+                    description: description,
+                    difficulty: difficulty,
+                    marks: marks,
+                    image: image,
+                    dueDate: dueDate
+                }
+            };
+            const result = await assignmentCollection.updateOne(filter, update);
+            res.send(result);
         });
 
         app.get('/features', async (req, res) => {
