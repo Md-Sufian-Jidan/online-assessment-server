@@ -46,10 +46,17 @@ async function run() {
 
         app.get('/assignment/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id: new ObjectId(id) };
-            const result = await assignmentCollection.findOne(query);
+            const filter = { _id: new ObjectId(id) };
+            const result = await assignmentCollection.findOne(filter);
             res.send(result);
         });
+
+        app.delete('/delete-assignment/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const result = await assignmentCollection.deleteOne(filter);
+            res.send(result);
+        })
 
         app.get('/features', async (req, res) => {
             const result = await featureCollection.find().toArray();
