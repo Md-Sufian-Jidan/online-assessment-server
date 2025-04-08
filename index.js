@@ -92,14 +92,14 @@ async function run() {
         });
 
         // assignment create api
-        app.post('/create-assignment', logger, async (req, res) => {
+        app.post('/create-assignment', logger, verifyToken, async (req, res) => {
             const assignment = req.body;
             const result = await assignmentCollection.insertOne(assignment);
             res.send(result);
         });
 
         // assignments get api
-        app.get('/assignments', logger, async (req, res) => {
+        app.get('/assignments', logger, verifyToken, async (req, res) => {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 6;
             const skip = (page - 1) * limit;
@@ -118,21 +118,21 @@ async function run() {
             });
         });
 
-        app.get('/assignment/:id', logger, async (req, res) => {
+        app.get('/assignment/:id', logger, verifyToken, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const result = await assignmentCollection.findOne(filter);
             res.send(result);
         });
 
-        app.delete('/delete-assignment/:id', logger, async (req, res) => {
+        app.delete('/delete-assignment/:id', logger, verifyToken, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const result = await assignmentCollection.deleteOne(filter);
             res.send(result);
         });
 
-        app.patch('/update-assignment/:id', logger, async (req, res) => {
+        app.patch('/update-assignment/:id', logger, verifyToken, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const { title, description, difficulty, marks, image, dueDate } = req.body;
@@ -151,18 +151,18 @@ async function run() {
         });
 
         // submitted assignments apis
-        app.post('/submit-assignment', logger, async (req, res) => {
+        app.post('/submit-assignment', logger, verifyToken, async (req, res) => {
             const submit = req.body;
             const result = await submittedAssignmentCollection.insertOne(submit);
             res.send(result);
         });
 
-        app.get('/pending', logger, async (req, res) => {
+        app.get('/pending', logger, verifyToken, async (req, res) => {
             const result = await submittedAssignmentCollection.find().toArray();
             res.send(result);
         });
 
-        app.patch('/complete-assignment/:id', logger, async (req, res) => {
+        app.patch('/complete-assignment/:id', logger, verifyToken, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const assignment = req.body;
@@ -182,14 +182,14 @@ async function run() {
         });
 
         // my submissions api
-        app.get('/my-submissions/:email', async (req, res) => {
+        app.get('/my-submissions/:email', logger, verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { submittedBy: email };
             const result = await submittedAssignmentCollection.find(query).toArray();
             res.send(result);
         });
         // leaderboard
-        app.get('/leaderboard', async (req, res) => {
+        app.get('/leaderboard', logger, verifyToken, async (req, res) => {
             const result = await submittedAssignmentCollection.find().toArray();
             res.send(result);
         });
